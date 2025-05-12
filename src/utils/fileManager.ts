@@ -25,4 +25,8 @@ export class FileManager {
   getExecutionDir(): string {
     return this.executionDir;
   }
+
+  getScreenshotPath(name: string): string {
+    return path.join(this.executionDir, `${name}.png`);
+  }
 }

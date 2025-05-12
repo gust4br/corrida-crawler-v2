@@ -7,30 +7,20 @@ export class LoginAction extends BaseAction {
       await this.init();
       await this.goto(`${this.baseUrl}/usuarios/login`);
 
-      if (!this.page) {
-        throw new Error("Page not initialized");
-      }
+      await this.waitForSelector(LoginSelectors.emailInput);
 
-      await this.page.waitForSelector(LoginSelectors.emailInput);
-
-      await this.page.type(LoginSelectors.emailInput, email);
-      await this.page.type(LoginSelectors.passwordInput, senha);
+      await this.type(LoginSelectors.emailInput, email);
+      await this.type(LoginSelectors.passwordInput, senha);
 
       await this.takeScreenshot("login-form-filled");
 
-      await this.page.click(LoginSelectors.submitButton);
+      await this.click(LoginSelectors.submitButton);
 
-      await this.page.waitForNavigation();
+      await this.waitForNavigation();
 
-      const emailInput = await this.page.$(HomeSelectors.emailInput);
-      if (emailInput) {
-        const emailValue = await this.page.evaluate(
-          (el) => el.getAttribute("value"),
-          emailInput
-        );
-        if (emailValue !== email) {
-          throw new Error("Email de login incorreto");
-        }
+      const emailValue = await this.getElementValue(HomeSelectors.emailInput);
+      if (emailValue && emailValue !== email) {
+        throw new Error("Email de login incorreto");
       }
 
       await this.takeScreenshot("login-success");

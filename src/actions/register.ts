@@ -8,20 +8,16 @@ export class RegisterAction extends BaseAction {
       await this.init();
       await this.goto(`${this.baseUrl}/usuarios/cadastro`);
 
-      if (!this.page) {
-        throw new Error("Page not initialized");
-      }
-
       // Aguarda o formulário estar disponível
-      await this.page.waitForSelector(RegisterSelectors.nameInput);
+      await this.waitForSelector(RegisterSelectors.nameInput);
 
       // Preenche os campos básicos do formulário
-      await this.page.type(RegisterSelectors.nameInput, usuario.nomeCompleto);
-      await this.page.type(RegisterSelectors.cpfInput, usuario.cpf);
-      await this.page.type(RegisterSelectors.emailInput, usuario.email);
-      await this.page.type(RegisterSelectors.phoneInput, usuario.telefone);
-      await this.page.type(RegisterSelectors.passwordInput, usuario.senha);
-      await this.page.type(
+      await this.type(RegisterSelectors.nameInput, usuario.nomeCompleto);
+      await this.type(RegisterSelectors.cpfInput, usuario.cpf);
+      await this.type(RegisterSelectors.emailInput, usuario.email);
+      await this.type(RegisterSelectors.phoneInput, usuario.telefone);
+      await this.type(RegisterSelectors.passwordInput, usuario.senha);
+      await this.type(
         RegisterSelectors.passwordConfirmationInput,
         usuario.senha
       );
@@ -29,32 +25,27 @@ export class RegisterAction extends BaseAction {
       await this.takeScreenshot("register-form-filled");
 
       // Submete o formulário
-      await this.page.click(RegisterSelectors.submitButton);
+      await this.click(RegisterSelectors.submitButton);
 
-      await this.page.waitForFunction(
+      await this.waitForFunction(
         () => {
           const form = document.querySelector("form");
           const errorBlock = document.querySelector(".error-block");
-          return !form || errorBlock;
+          return Boolean(!form || errorBlock);
         },
-        { timeout: 10000 } // 10 segundos de timeout
+        { timeout: 10000 }
       );
 
-      const url = await this.page.url();
+      const url = await this.getCurrentUrl();
       if (url.includes("/usuarios")) {
-        const errorBlock = await this.page.$(".error-block");
+        const errorBlock = await this.getElementText(".error-block");
         if (errorBlock) {
-          const errorMessages = await this.page.evaluate((block) => {
-            const items = block.querySelectorAll("li");
-            return Array.from(items).map((item) => item.textContent?.trim());
-          }, errorBlock);
-
+          const errorMessages = errorBlock.split("\n").filter(Boolean);
           if (errorMessages.length > 0) {
             const errorText = errorMessages.join(", ");
+            this.logger.error(`Erros no cadastro: ${errorText}`);
             throw new Error(`Falha no cadastro: ${errorText}`);
           }
-
-          await this.takeScreenshot("error");
         }
         throw new Error(
           "Não houve redirecionamento após o envio do formulário"
