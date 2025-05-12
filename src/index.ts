@@ -1,29 +1,55 @@
-import { ScreenshotManager } from "./utils/screenshot";
 import { FileManager } from "./utils/fileManager";
 import { Logger } from "./utils/logger";
-import { Navigator } from "./utils/navigator";
+import { LoginAction, RegisterAction } from "./actions";
+import { getAllUsers } from "./utils/userData";
 
-async function main() {
+async function processUser(usuario: any) {
   const fileManager = new FileManager();
   const logger = new Logger(fileManager.getExecutionDir());
-  const navigator = new Navigator(logger);
-  const screenshotManager = new ScreenshotManager(fileManager, logger);
 
   try {
-    await navigator.init();
-    const page = await navigator.newPage();
-    await navigator.goto(page, "https://www.google.com");
+    logger.log("🚀 Iniciando execução...");
+    logger.internal(`Usuário: ${usuario.email}`);
 
-    logger.log("Capturando screenshot...");
-    await screenshotManager.screenshot(page, "google-home");
+    const loginAction = new LoginAction(fileManager, logger);
+    try {
+      await loginAction.execute(usuario.email, usuario.senha);
+      logger.log("✅ Login realizado com sucesso!");
+      return;
+    } catch (error) {
+      logger.log("❌ Login falhou, iniciando processo de registro...");
+      logger.internal(
+        `Erro no login: ${
+          error instanceof Error ? error.message : "Erro desconhecido"
+        }`
+      );
+    }
 
-    await navigator.close();
-    logger.log(`Pasta de execução: ${fileManager.getExecutionDir()}`);
+    const registerAction = new RegisterAction(fileManager, logger);
+    await registerAction.execute(usuario);
+    logger.log("✅ Registro realizado com sucesso!");
   } catch (error) {
-    logger.log(
+    logger.log("❌ Erro na execução");
+    logger.internal(
       `Erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`
     );
+  } finally {
+    logger.log("🏁 Finalizando execução");
   }
+}
+
+async function main() {
+  const usuarios = await getAllUsers();
+  if (usuarios.length === 0) {
+    console.log("Nenhum usuário encontrado em usuarios.json");
+    process.exit(1);
+  }
+
+  console.log(`📋 Processando ${usuarios.length} usuário(s)...`);
+  for (const usuario of usuarios) {
+    await processUser(usuario);
+  }
+  process.exit(0);
 }
 
 main();

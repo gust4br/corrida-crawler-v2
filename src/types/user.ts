@@ -8,7 +8,10 @@ export enum CamisetaTamanho {
   EG2 = "EG2",
 }
 
-export enum Categoria {}
+export enum Categoria {
+  "4K" = "4K",
+  "8K" = "8K",
+}
 // Será preenchido em breve
 
 export interface RedesSociais {
@@ -60,7 +63,7 @@ export interface CadastroCorrida {
   categoria: Categoria;
   tamanhoCamiseta: CamisetaTamanho;
   planoSaude: PlanoSaude;
-  contatoEmergencia: ContatoEmergencia;
+  contatoEmergencia?: ContatoEmergencia;
   redesSociais?: RedesSociais;
 }
 
